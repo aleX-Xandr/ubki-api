@@ -1,0 +1,13 @@
+{% extends 'index.html' %}
+
+{% block title %} Upload file {% endblock %}
+
+{% block page_content %}
+    <form class="sending-form">
+        <div>
+            <input type="file" id="csvFileInput" accept=".csv">
+        </div>
+        <button class="submit-button" type="submit">Send</button>
+        <p id="result"></p>
+    </form>
+{% endblock %}
