@@ -3,9 +3,9 @@
 {% block title %} Login {% endblock %}
 
 {% block page_content %}
-    <form class="auth-form" method="POST">
-        <input name="login" placeholder="Login" type="text">
-        <input name="password" placeholder="Password" type="password">
+    <form class="auth-form" method="POST" action="auth">
+        <input name="login" placeholder="Login" type="text" required>
+        <input name="password" placeholder="Password" type="password" required>
         <button class="submit-button" type="submit">Submit</button>
     </form>
 {% endblock %}

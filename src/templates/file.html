@@ -3,11 +3,11 @@
 {% block title %} Upload file {% endblock %}
 
 {% block page_content %}
-    <form class="sending-form">
+    <form class="sending-form" method="POST" action="file" enctype="multipart/form-data">
         <div>
-            <input type="file" id="csvFileInput" accept=".csv">
+            <input type="file" name="file" accept=".csv" required>
         </div>
         <button class="submit-button" type="submit">Send</button>
-        <p id="result"></p>
+        <p id="result">{{ message }}</p>
     </form>
 {% endblock %}
