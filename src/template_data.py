@@ -29,7 +29,7 @@ PERSON = {
         {
             "vdate": "",
             "lng": "",
-            "dtype": "",
+            "dtype": "1",
             "dser": "",
             "dnom": "",
             "eddr_number": "",
@@ -42,8 +42,8 @@ PERSON = {
         {
             "vdate": "",
             "lng": "",
-            "adtype": "", # 2
-            "adcountry": "",
+            "adtype": "2", 
+            "adcountry": "804",
             "adindex": "",
             "adstate": "",
             "adarea": "",
@@ -73,7 +73,7 @@ PERSON = {
             "dlds": "",
             "dlcelcred": "",
             "dlvidobes": "",
-            "dlporpog": "",
+            "dlporpog": "10",
             "dlcurr": "",
             "dlamt": "",
             "dlrolesub": "",

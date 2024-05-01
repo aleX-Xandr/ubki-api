@@ -19,14 +19,11 @@ router = InferringRouter()
 class FormRouter(BaseFormRouter):
     api_path: str = "upload/data"
 
-    async def build_task(self, csv_dict: dict):
+    async def build_task(self, csv_dict: dict) -> dict:
         builder = DataBuilder(csv_dict)
         await builder.build()
-        print(builder.as_dict)
         data = await self.call_api(json=builder.as_dict)
-        print(data)
-        if data:
-            return data["doc"]["auth"]["sessid"]
+        return data
     
     @router.get("/file", response_class=HTMLResponse, response_model=None)
     async def render_form(
@@ -42,11 +39,12 @@ class FormRouter(BaseFormRouter):
     async def process_form_data(
         self,
         request: Request,
-        token: str = Cookie(default="aaaa"), # None),
+        token: str = Cookie(default=None),
         file: UploadFile = File(...)
     ) -> Any:
         if not token:
             return RedirectResponse("/auth", status_code=302)
+        self.headers["SessId"] = token
         try:
             content = await file.read()
             buffer = io.BytesIO(content)

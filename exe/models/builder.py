@@ -3,8 +3,7 @@ from typing import Any, Generator
 
 from .data import Data
 from .scope import Scope
-from ..template_data import PERSON
-from ..template_scopes import SCOPE_GROUPS
+from config import PERSON, SCOPE_GROUPS
 
 import asyncio
 import math
@@ -21,10 +20,9 @@ class DataBuilder:
         return dict(self.__storage.dict())
 
     def get_value_scopes(self, key: str, num: int = 0) -> Generator[Scope, Any, Any]: 
-        
         data = re.search(r'(\D+)\.(\d{1,})$', key)
         if data:
-            print("Bad key ", key)
+            # print("Bad key ", key)
             key = data.group(1)          # fix bug when some keys parsed as "key.number"
         data = re.search(r'(\D+)(\d{1,})$', key)
         if data:
@@ -60,7 +58,7 @@ class DataBuilder:
                 for item in current:
                     yield from self.find_by_scope(item, location[1:], num)
 
-    async def build(self) -> None:
+    def build(self) -> None:
         for raw_key, value in self.__csv_data.items(): # (abc | abc1), Any
             if "Unnamed: " in raw_key:
                 continue
@@ -69,15 +67,14 @@ class DataBuilder:
                 continue
             if value.endswith(".0"):
                 value = value[:-2]
-            # await asyncio.sleep(0)
             for scope in self.get_value_scopes(raw_key):
                 temp = self.__storage.data["fo_cki"]
-                # print("scope location: ", raw_key, scope.location, scope.num)
                 for data, key in self.find_by_scope(temp, scope.location, scope.num):
-                    
+                    # logic for custom values 
                     if key == "vdate":
                         value = datetime.now().strftime("%Y-%m-%d")
                     data[key] = str(value)
+
 
    
 
