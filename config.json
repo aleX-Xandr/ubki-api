@@ -1,4 +1,6 @@
 {
+    "DEBUG_MODE": false,
+    "ADD_ZERO_TO_DNOM": false,
     "BASE_URL": "https://test.ubki.ua",
     "PERSON": {
         "inn": "",
@@ -46,14 +48,14 @@
                 "lng": "",
                 "adtype": "2", 
                 "adcountry": "804",
-                "adindex": "",
-                "adstate": "",
-                "adarea": "",
-                "adcity": "",
-                "adcitytype": "",
-                "adstreet": "",
-                "adhome": "",
-                "adcorp": "",
+                "adindex": "49000",
+                "adstate": "EMPTY",
+                "adarea": "EMPTY",
+                "adcity": "EMPTY",
+                "adcitytype": "4",
+                "adstreet": "EMPTY",
+                "adhome": "1",
+                "adcorp": "1",
                 "adflat": "",
                 "addrdirt": ""
             }
@@ -62,7 +64,7 @@
             {
                 "vdate": "",
                 "lng": "",
-                "cdolgn": "",
+                "cdolgn": "3",
                 "wokpo": "",
                 "wname": "",
                 "wstag": "",
@@ -72,21 +74,25 @@
         "deals": [
             {
                 "dlref": "",
+                "lng": "",
+                "inn": "",
                 "dlds": "",
-                "dlcelcred": "",
+                "dlcelcred": "10",
                 "dlvidobes": "",
                 "dlporpog": "10",
                 "dlcurr": "",
                 "dlamt": "",
-                "dlrolesub": "",
+                "dlrolesub": "1",
                 "dlamtobes": "",
                 "deallife": [
-                    {
+                    {   
+                        "dlref": "",
                         "dlmonth": "",
                         "dlyear": "",
-                        "dlflstat": "",
+                        "dlds": "",
                         "dldpf": "",
                         "dldff": "",
+                        "dlflstat": "",
                         "dlkontragent": "",
                         "dlsale_date": "",
                         "dlsale_name": "",
@@ -109,7 +115,7 @@
         "contacts": [
             {
                 "vdate": "",
-                "type": "3",
+                "ctype": "3",
                 "cval": ""
             }
         ]
@@ -117,7 +123,8 @@
     "SCOPE_GROUPS": {
         "inn": [
             "inn", 
-            "idents.0.inn"
+            "idents.0.inn", 
+            "deals.0.inn"
         ],
         "person_id": ["person_id"],
         "is_gone": ["is_gone"],
@@ -149,7 +156,8 @@
             "idents.0.lng",
             "docs.0.lng",
             "addrs.0.lng",
-            "works.0.lng"
+            "works.0.lng",
+            "deals.0.lng"
         ],
         "csex": ["idents.0.csex"],
         "family": ["idents.0.family"],
@@ -182,8 +190,8 @@
         "wname": ["works.0.wname"],
         "wstag": ["works.0.wstag"],
         "wdohod": ["works.0.wdohod"],
-        "dlref": ["deals.0.dlref"],
-        "dlds": ["deals.0.dlds"],
+        "dlref": ["deals.0.dlref", "deals.0.deallife.0.dlref"],
+        "dlds": ["deals.0.dlds", "deals.0.deallife.0.dlds"],
         "dlcelcred": ["deals.0.dlcelcred"],
         "dlvidobes": ["deals.0.dlvidobes"],
         "dlporpog": ["deals.0.dlporpog"],
@@ -211,7 +219,7 @@
         "dlflbrk": ["deals.0.deallife.0.dlflbrk"],
         "dlfluse": ["deals.0.deallife.0.dlfluse"],
         "dldateclc": ["deals.0.deallife.0.dldateclc"],
-        "ctype": ["contacts.0.type"],
+        "ctype": ["contacts.0.ctype"],
         "tel": ["contacts.0.cval"]
     }
 }

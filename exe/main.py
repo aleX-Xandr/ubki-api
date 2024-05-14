@@ -7,6 +7,7 @@ import json
 import threading
 
 from api import BaseApi
+from config import DEBUG_MODE
 from frames import LoginFrame, FileFrame
 from models.builder import DataBuilder 
 
@@ -15,17 +16,26 @@ class LoginApp(tk.Tk):
 
     def __init__(self) -> None:
         super().__init__()
-        self.title("Login Interface")
-        self.attributes('-fullscreen', True)
+        # Allow the window to be resized horizontally and vertically
+        self.geometry("800x600")  # Set initial size
+        self.minsize(400, 300)  # Set minimum size
         self.file_frame = FileFrame(self)
-        self.login_frame = LoginFrame(self) # init login frame
+        self.login_frame = LoginFrame(self)
 
         if self.has_session():
-            self.file_frame.pack(fill="both", expand=True, pady=100, padx=100)
-            self.login_frame.pack_forget()
+            self.show_file_frame()
         else:
-            self.file_frame.pack_forget()
-            self.login_frame.pack(fill="both", expand=True, pady=100, padx=100)
+            self.show_login_frame()
+
+    def show_file_frame(self):
+        self.file_frame.pack(fill="both", expand=True, pady=10, padx=10)
+        self.login_frame.pack_forget()
+        self.title("Upload File")
+
+    def show_login_frame(self):
+        self.login_frame.pack(fill="both", expand=True, pady=10, padx=10)
+        self.file_frame.pack_forget()
+        self.title("Login Interface")
 
     def has_session(self) -> bool:
         try:
@@ -83,24 +93,36 @@ class LoginApp(tk.Tk):
     def file_task(self) -> None:
         file_path = filedialog.askopenfilename(title="Виберіть файл")
         self.file_frame.output_field.delete(1.0, tk.END)
-        if file_path:
-            with open(file_path, 'rb') as file:
-                content = file.read()
-                buffer = io.BytesIO(content)
-                csv_data = pd.read_csv(buffer, encoding="Windows-1251", sep=";")
-                csv_dicts = csv_data.to_dict(orient='records')
-                csv_len = len(csv_dicts)
-                for i, csv_dict in enumerate(csv_dicts):
-                    person_object = self.build_task(csv_dict)
-                    api = BaseApi(api_path="upload/data")
-                    api.headers["SessId"] = self.token
-                    resp_code, resp_data = api.send_data(person_object)
-                    errors = resp_data['sentdatainfo']["items"]
-                    separator = f"\n{'#'*20}\n({i+1}/{csv_len}) \nSTATUS:{resp_code} \nINN:{resp_data['sentdatainfo']['inn']}\n"
-                    self.file_frame.output(f"\n\n{separator}\nВідправлені дані: {json.dumps(person_object, indent=4, ensure_ascii=False)}\nПомилки сервера: {json.dumps(errors, indent=4, ensure_ascii=False)}")
-            self.file_frame.output("Відправлення даних завершено.")
-        else:
+        if not file_path:
             self.file_frame.output("Файл не був обраний.")
+            return
+    
+        with open(file_path, 'rb') as file:
+            content = file.read()
+        buffer = io.BytesIO(content)
+        csv_data = pd.read_csv(buffer, encoding="Windows-1251", sep=";")
+        csv_dicts = csv_data.to_dict(orient='records')
+        csv_len = len(csv_dicts)
+        success_users = 0
+        for i, csv_dict in enumerate(csv_dicts):
+            person_object = self.build_task(csv_dict)
+            api = BaseApi(api_path="upload/data")
+            api.headers["SessId"] = self.token
+            resp_code, resp_data = api.send_data(person_object)
+            errors = resp_data['sentdatainfo']["items"]
+            errors.sort(key=lambda error: error["errtype"])
+            if resp_code < 300:
+                status = "БЕЗ ПОМИЛОК"
+                success_users += 1
+            else:
+                status = "НАЯВНI ПОМИЛКИ"
+            if DEBUG_MODE:
+                separator = f"\n({i+1}/{csv_len}), STATUS:{status}, INN:{person_object['data']['fo_cki']['inn']}\nВідправлені дані: {json.dumps(person_object, indent=4, ensure_ascii=False)}\nПомилки сервера: {json.dumps(errors, indent=4, ensure_ascii=False)}"
+            else:
+                error_text = errors[0]["msg"] # json.dumps(error, indent=4, ensure_ascii=False)
+                separator = f"\n({i+1}/{csv_len}) STATUS:{status}, INN:{person_object['data']['fo_cki']['inn']}\n{error_text}" # remove "{}" symbols from json dump
+            self.file_frame.output(f"{separator}") #\nВідправлені дані: {json.dumps(person_object, indent=4, ensure_ascii=False)}\nПомилки сервера: {json.dumps(errors, indent=4, ensure_ascii=False)}")
+        self.file_frame.output(f"\n\nВідправлення даних завершено. Успішно: {success_users} з {csv_len}")
 
     def open_file(self):
         task = threading.Thread(target=self.file_task)

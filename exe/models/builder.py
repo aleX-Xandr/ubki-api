@@ -3,7 +3,7 @@ from typing import Any, Generator
 
 from .data import Data
 from .scope import Scope
-from config import PERSON, SCOPE_GROUPS
+from config import PERSON, SCOPE_GROUPS, ADD_ZERO_TO_DNOM
 
 import asyncio
 import math
@@ -17,7 +17,9 @@ class DataBuilder:
     
     @property
     def as_dict(self) -> dict:
-        return dict(self.__storage.dict())
+        result = self.__storage.model_dump()
+        # result["data"]["fo_cki"]["works"] = []
+        return result
 
     def get_value_scopes(self, key: str, num: int = 0) -> Generator[Scope, Any, Any]: 
         data = re.search(r'(\D+)\.(\d{1,})$', key)
@@ -64,16 +66,34 @@ class DataBuilder:
                 continue
             value = str(value)
             if value in [" ", "nan"]:
-                continue
+                value = ""
             if value.endswith(".0"):
                 value = value[:-2]
             for scope in self.get_value_scopes(raw_key):
                 temp = self.__storage.data["fo_cki"]
                 for data, key in self.find_by_scope(temp, scope.location, scope.num):
                     # logic for custom values 
-                    if key == "vdate":
+
+                    if ADD_ZERO_TO_DNOM and key == "dnom":
+                        value = "0"*(9 - len(value)) + value
+                    elif key == "cval":
+                        if value.startswith("80"):
+                            value = "3"+value
+                    elif key == "vdate":
                         value = datetime.now().strftime("%Y-%m-%d")
-                    data[key] = str(value)
+                    elif key == "dlyear":
+                        value = datetime.now().strftime("%Y")
+                    elif key == "dlmonth":
+                        value = datetime.now().strftime("%m")
+                    data[key] = str(value) or data[key]
+
+            
+            for deal in self.__storage.data["fo_cki"]["deals"]:
+                deal["deallife"][0]["dlyear"] = datetime.now().strftime("%Y")
+                deal["deallife"][0]["dlmonth"] = datetime.now().strftime("%m")
+                deal["deallife"][0]["dldateclc"] = datetime.now().strftime("%Y-%m-%d")
+            # del self.__storage.data["fo_cki"]["addrs"]
+            
 
 
    
