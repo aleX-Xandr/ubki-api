@@ -140,17 +140,6 @@ class LoginApp(tk.Tk):
         for future in concurrent.futures.as_completed(futures):
             success_users += int(future.result())
 
-        # with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
-        #     executor.map(self.send_build, csv_dicts)
-
-        # for i, csv_dict in enumerate(csv_dicts):
-        #     task = threading.Thread(target=self.send_build, args=[success_users, csv_dict])
-        #     task.start()
-        #     tasks.append(task)
-
-        # for task in tasks:
-        #     task.join()
-            
         self.file_frame.output(f"\n\nВідправлення даних завершено. Успішно: {success_users} з {csv_len}")
 
     def open_file(self):

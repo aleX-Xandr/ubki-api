@@ -5,8 +5,6 @@ from .data import Data
 from .scope import Scope
 from config import PERSON, SCOPE_GROUPS, ADD_ZERO_TO_DNOM
 
-import asyncio
-import math
 import re
 last_scope_error_key: str = str()
 
@@ -17,15 +15,12 @@ class DataBuilder:
     
     @property
     def as_dict(self) -> dict:
-        result = self.__storage.model_dump()
-        # result["data"]["fo_cki"]["works"] = []
-        return result
+        return self.__storage.model_dump()
 
     def get_value_scopes(self, key: str, num: int = 0) -> Generator[Scope, Any, Any]: 
         data = re.search(r'(\D+)\.(\d{1,})$', key)
         if data:
-            # print("Bad key ", key)
-            key = data.group(1)          # fix bug when some keys parsed as "key.number"
+            key = data.group(1)          # if key parsed as "key.number"
         data = re.search(r'(\D+)(\d{1,})$', key)
         if data:
             key = data.group(1)          # first part of raw key "abc1"
@@ -92,170 +87,4 @@ class DataBuilder:
                 deal["deallife"][0]["dlyear"] = datetime.now().strftime("%Y")
                 deal["deallife"][0]["dlmonth"] = datetime.now().strftime("%m")
                 deal["deallife"][0]["dldateclc"] = datetime.now().strftime("%Y-%m-%d")
-            # del self.__storage.data["fo_cki"]["addrs"]
-            
-
-
-   
-
-            
-
-    # def get_objects(self, parts: list[str], current: dict|list[dict], key: str, num: int) -> Generator[dict|list[dict]]:
-    #     for i, part in enumerate(parts[:-1]): # "deals.0.deallife.0.dlsale_addr"
-    #         current_type = list if part == "0" else dict
-    #         if not isinstance(current, current_type): # VALIDATION TYPE
-    #             print(f"IGNORED: {part} is not a valid key for {current} {current_type}")
-    #             break
-    #         if part == "0":
-    #             if __num > 0 and i == 1:
-    #                 current = current[__num]
-
-
-    #         if num > 0:
-    #             yield current[num-1]
-    #         else:
-    #             for item in current:
-    #                 yield item
-                    
-
-            ####################
-        #     if num > 0:
-        #         yield current[num-1]
-        #     else:
-        #         for item in current:
-        #             yield item
-        #     ####################
-
-
-
-        #     parts = path.split('.')
-        #     if num == 0:
-        #         # range(len(...))
-        #     else:
-
-                
-        # if num > 0:
-        #     ...
-
-        # return scope
-
-
-
-    # def build(self):
-    #     for raw_key, value in self.__csv_data.items(): # (abc | abc1), Any
-    #         for scope in self.get_value_scope(raw_key):
-    #             ...
-
-
-    #         scope = Scope.from_raw(key)
-    #         for parts in scope.parts:
-    #             parts = [
-    #                 p.replace(".0.", f".{scope.num}.") for p in parts
-    #             ]
-
-
-    #         key, num = self.find_parts(key)   # abc, (0 | 1) 
-    #         # для ключа "abc" находим с учетом num
-    #         parts = self.get_value_scope(key, num)
-    #         self.set_person_data(num, key, value)
-
-
-    #         parts = [k.split('.') for k in KEYS[key]]
-    #         for key_location in parts: # key locations in result object 
-    #             current = self.__storage.data["fo_cki"] # result object with user data
-    #             for sub_key in key_location.split("."):
-
-    
-    # def set_person_data(self, __num: int, __key: str, __value:Any) -> Generator[dict]:
-    #     parts = [k.split('.') for k in KEYS[__key]]
-    #     for part in parts:
-                
-    #         current = self.__storage["fo_cki"] # result object with user data
-
-    #         # по каждому 
-
-    #         def get_objects(self, part: list[str], current: dict|list[dict]):
-    #             for i, key in enumerate(part[:-1]):
-
-    #                 current_type = list if key == "0" else dict
-    #                 if not isinstance(current, current_type): # VALIDATION TYPE
-    #                     print(f"IGNORED: {key} is not a valid key for {current} {current_type}")
-    #                     break
-                    
-    #                 if key == "0":
-    #                     if __num > 0 and i == 1:
-    #                         current = current[__num]
-
-    #                         ...
-
-                    
-    #                 if key.isdigit() and __num > 0 and i == len(part)-2:
-    #                     current[__num-1]
-    #                 else:
-    #                     ...
-
-    #                 if not key.isdigit(): # if key not digit
-    #                     current = current[key] 
-    #                     continue
-    #                 else:
-    #                     if not isinstance(current, list): # VALIDATION TYPE
-    #                         print(f"IGNORED: {key} is not a valid key for {current} list")
-    #                         continue
-    #                     if __num == 0 or i < len(part)-2:
-    #                         current = current[__num]
-    #                     else:
-    #                         current = current[__num-1]
-    #                         for cur in current:
-    #                             for target in self.get_objects(
-    #                                 part[i:], cur
-    #                             ):
-    #                                 yield target
-    #                         break
-    #             else:
-    #                 yield current
-
-
-
-    #         for key in part[:-1]: # until last KEY
-    #             if key != "0":
-    #                 current = current[key] 
-    #             elif __num == -1:
-    #                 for cur in current:
-    #                     yield cur
-    #             else:
-    #                 current = current[__num]
-    #             # if key not in current:
-    #             #     current[key] = {}
-                
-    #         final_key = part[-1] # last KEY
-    #         current[final_key] = __value
-
-            ###############################
-
-    # def update_nested_dict(d, keys, new_value):
-    #     # Split the keys into a list of parts
-    #     parts = [k.split('.') for k in keys]
-
-    #     for part in parts:
-    #         # Start at the root dictionary
-    #         current = d
-            
-    #         # Traverse the dictionary path
-    #         for key in part[:-1]:
-    #             # If the key doesn't exist, create a new dictionary
-    #             if key not in current:
-    #                 current[key] = {}
-    #             current = current[key]
-            
-    #         # Update the final key with the new value
-    #         final_key = part[-1]
-    #         current[final_key] = new_value
-
-        
-            # if parts := self.has_parts(key):
-            #     key = parts.group(1)
-            #     num = int(parts.group(2))
-            #     # проверить есть ли такой num в обьекте
-
-
-            # self[key] = value
+  
