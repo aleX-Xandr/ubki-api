@@ -8,9 +8,9 @@ import pandas as pd
 import threading
 import tkinter as tk
 
-from api import BaseApi
+from components.api import Client
+from components.frames import FileFrame, LoginFrame
 from config import DEBUG_MODE, MAX_THREADS, MESSAGE_TEMPLATE
-from frames import FileFrame, LoginFrame
 from models.builder import DataBuilder 
 
 class LoginApp(tk.Tk):
@@ -54,7 +54,7 @@ class LoginApp(tk.Tk):
         return False
         
     def login(self, username, password) -> bool:
-        api = BaseApi(api_path="b2_api_xml/ubki/auth")
+        api = Client(api_path="b2_api_xml/ubki/auth")
         resp_data = api.authorize(username, password)
         if not resp_data:
             return False
@@ -93,7 +93,7 @@ class LoginApp(tk.Tk):
 
     def send_build(self, csv_dict: dict) -> bool:
         person_object = self.build_task(csv_dict)
-        api = BaseApi(api_path="upload/data")
+        api = Client(api_path="upload/data")
         api.headers["SessId"] = self.token
         resp_code, resp_data = api.send_data(person_object)
         errors = resp_data['sentdatainfo']["items"]

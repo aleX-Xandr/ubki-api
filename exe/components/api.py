@@ -5,7 +5,7 @@ import requests
 from config import BASE_URL
 
 @dataclass
-class BaseApi:
+class Client:
     api_path: str
     headers: dict = field(default_factory=lambda: {
         "Accept": "application/json",

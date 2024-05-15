@@ -1,6 +1,6 @@
 from tkinter import ttk
 
-from components import *
+from components.ui_components import *
 
 class LoginFrame(ttk.Frame):
     def __init__(self, app):
