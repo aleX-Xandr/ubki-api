@@ -1,5 +1,5 @@
 {
-    "DEBUG_MODE": false,
+    "DEBUG_MODE": true,
     "MESSAGE_TEMPLATE": "STATUS:{status}, INN:{inn}\n {error}",
     "ADD_ZERO_TO_DNOM": false,
     "MAX_THREADS": 10,

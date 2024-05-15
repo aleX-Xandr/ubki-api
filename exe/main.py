@@ -18,12 +18,12 @@ class LoginApp(tk.Tk):
 
     def __init__(self) -> None:
         super().__init__()
-        self.geometry("800x600")    # встановлюємо початковий розмір
-        self.minsize(400, 300)      # встановлюємо мінімальний розмір
+        self.geometry("800x600") # встановлюємо початковий розмір
+        self.minsize(400, 300) # встановлюємо мінімальний розмір
         self.file_frame = FileFrame(self)
         self.login_frame = LoginFrame(self)
 
-        if self.has_session():      # Пропуск авторизації
+        if self.has_session(): # Пропуск авторизації
             self.show_file_frame()  
         else:
             self.show_login_frame()
