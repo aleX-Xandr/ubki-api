@@ -1,6 +1,8 @@
 {
     "DEBUG_MODE": false,
+    "MESSAGE_TEMPLATE": "STATUS:{status}, INN:{inn}\n {error}",
     "ADD_ZERO_TO_DNOM": false,
+    "MAX_THREADS": 10,
     "BASE_URL": "https://test.ubki.ua",
     "PERSON": {
         "inn": "",

@@ -1,14 +1,16 @@
 from typing import Optional
 from tkinter import filedialog
-import tkinter as tk
-import pandas as pd
+
+import concurrent.futures
 import io
 import json
+import pandas as pd
 import threading
+import tkinter as tk
 
 from api import BaseApi
-from config import DEBUG_MODE
-from frames import LoginFrame, FileFrame
+from config import DEBUG_MODE, MAX_THREADS, MESSAGE_TEMPLATE
+from frames import FileFrame, LoginFrame
 from models.builder import DataBuilder 
 
 class LoginApp(tk.Tk):
@@ -16,23 +18,22 @@ class LoginApp(tk.Tk):
 
     def __init__(self) -> None:
         super().__init__()
-        # Allow the window to be resized horizontally and vertically
-        self.geometry("800x600")  # Set initial size
-        self.minsize(400, 300)  # Set minimum size
+        self.geometry("800x600")    # встановлюємо початковий розмір
+        self.minsize(400, 300)      # встановлюємо мінімальний розмір
         self.file_frame = FileFrame(self)
         self.login_frame = LoginFrame(self)
 
-        if self.has_session():
-            self.show_file_frame()
+        if self.has_session():      # Пропуск авторизації
+            self.show_file_frame()  
         else:
             self.show_login_frame()
 
-    def show_file_frame(self):
+    def show_file_frame(self) -> None:
         self.file_frame.pack(fill="both", expand=True, pady=10, padx=10)
         self.login_frame.pack_forget()
         self.title("Upload File")
 
-    def show_login_frame(self):
+    def show_login_frame(self) -> None:
         self.login_frame.pack(fill="both", expand=True, pady=10, padx=10)
         self.file_frame.pack_forget()
         self.title("Login Interface")
@@ -90,11 +91,39 @@ class LoginApp(tk.Tk):
         password = self.login_frame.entry_password.get()
         return self.login(username, password)
 
+    def send_build(self, csv_dict: dict) -> bool:
+        person_object = self.build_task(csv_dict)
+        api = BaseApi(api_path="upload/data")
+        api.headers["SessId"] = self.token
+        resp_code, resp_data = api.send_data(person_object)
+        errors = resp_data['sentdatainfo']["items"]
+        errors.sort(key=lambda error: error["errtype"])
+        resp_status = resp_code < 300
+        if resp_status:
+            status = "БЕЗ ПОМИЛОК"
+        else:
+            status = "НАЯВНI ПОМИЛКИ"
+        if DEBUG_MODE:
+            result = f"\nSTATUS:{status}, INN:{person_object['data']['fo_cki']['inn']}\nВідправлені дані: {json.dumps(person_object, indent=4, ensure_ascii=False)}\nПомилки сервера: {json.dumps(errors, indent=4, ensure_ascii=False)}"
+        else:
+            error_text = errors[0]["msg"] # json.dumps(error, indent=4, ensure_ascii=False)
+            result = MESSAGE_TEMPLATE.format(
+                status=status, 
+                data=json.dumps(person_object, indent=4, ensure_ascii=False),
+                error=error_text, 
+                all_errors=json.dumps(errors, indent=4, ensure_ascii=False),
+                inn=person_object['data']['fo_cki']['inn'], 
+                response_code=resp_code,
+            )
+        self.file_frame.output(f"\n{result}")
+        return resp_status
+
+
     def file_task(self) -> None:
         file_path = filedialog.askopenfilename(title="Виберіть файл")
         self.file_frame.output_field.delete(1.0, tk.END)
         if not file_path:
-            self.file_frame.output("Файл не був обраний.")
+            self.file_frame.output("Файл не був вибраний.")
             return
     
         with open(file_path, 'rb') as file:
@@ -104,24 +133,24 @@ class LoginApp(tk.Tk):
         csv_dicts = csv_data.to_dict(orient='records')
         csv_len = len(csv_dicts)
         success_users = 0
-        for i, csv_dict in enumerate(csv_dicts):
-            person_object = self.build_task(csv_dict)
-            api = BaseApi(api_path="upload/data")
-            api.headers["SessId"] = self.token
-            resp_code, resp_data = api.send_data(person_object)
-            errors = resp_data['sentdatainfo']["items"]
-            errors.sort(key=lambda error: error["errtype"])
-            if resp_code < 300:
-                status = "БЕЗ ПОМИЛОК"
-                success_users += 1
-            else:
-                status = "НАЯВНI ПОМИЛКИ"
-            if DEBUG_MODE:
-                separator = f"\n({i+1}/{csv_len}), STATUS:{status}, INN:{person_object['data']['fo_cki']['inn']}\nВідправлені дані: {json.dumps(person_object, indent=4, ensure_ascii=False)}\nПомилки сервера: {json.dumps(errors, indent=4, ensure_ascii=False)}"
-            else:
-                error_text = errors[0]["msg"] # json.dumps(error, indent=4, ensure_ascii=False)
-                separator = f"\n({i+1}/{csv_len}) STATUS:{status}, INN:{person_object['data']['fo_cki']['inn']}\n{error_text}" # remove "{}" symbols from json dump
-            self.file_frame.output(f"{separator}") #\nВідправлені дані: {json.dumps(person_object, indent=4, ensure_ascii=False)}\nПомилки сервера: {json.dumps(errors, indent=4, ensure_ascii=False)}")
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
+            futures = [executor.submit(self.send_build, csv_dict) for csv_dict in csv_dicts]
+
+        for future in concurrent.futures.as_completed(futures):
+            success_users += int(future.result())
+
+        # with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
+        #     executor.map(self.send_build, csv_dicts)
+
+        # for i, csv_dict in enumerate(csv_dicts):
+        #     task = threading.Thread(target=self.send_build, args=[success_users, csv_dict])
+        #     task.start()
+        #     tasks.append(task)
+
+        # for task in tasks:
+        #     task.join()
+            
         self.file_frame.output(f"\n\nВідправлення даних завершено. Успішно: {success_users} з {csv_len}")
 
     def open_file(self):
