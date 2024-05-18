@@ -71,6 +71,8 @@ class DataBuilder:
 
                     if ADD_ZERO_TO_DNOM and key == "dnom":
                         value = "0"*(9 - len(value)) + value
+                    if key == "lng":
+                        data[key] = value or "1"
                     elif key == "cval":
                         if value.startswith("80"):
                             value = "3"+value

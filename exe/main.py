@@ -10,11 +10,16 @@ import tkinter as tk
 
 from components.api import Client
 from components.frames import FileFrame, LoginFrame
+from components.logger import Logger
 from config import DEBUG_MODE, MAX_THREADS, MESSAGE_TEMPLATE
-from models.builder import DataBuilder 
+from models.builder import DataBuilder
+
+logger = Logger()
 
 class LoginApp(tk.Tk):
     token: Optional[str] = None
+    success_users: int = 0
+    log_dump: str = ""
 
     def __init__(self) -> None:
         super().__init__()
@@ -103,25 +108,34 @@ class LoginApp(tk.Tk):
             status = "БЕЗ ПОМИЛОК"
         else:
             status = "НАЯВНI ПОМИЛКИ"
-        if DEBUG_MODE:
-            result = f"\nSTATUS:{status}, INN:{person_object['data']['fo_cki']['inn']}\nВідправлені дані: {json.dumps(person_object, indent=4, ensure_ascii=False)}\nПомилки сервера: {json.dumps(errors, indent=4, ensure_ascii=False)}"
-        else:
-            error_text = errors[0]["msg"] # json.dumps(error, indent=4, ensure_ascii=False)
-            result = MESSAGE_TEMPLATE.format(
-                status=status, 
-                data=json.dumps(person_object, indent=4, ensure_ascii=False),
-                error=error_text, 
-                all_errors=json.dumps(errors, indent=4, ensure_ascii=False),
-                inn=person_object['data']['fo_cki']['inn'], 
-                response_code=resp_code,
-            )
+        self.log_dump += f"\nSTATUS:{status}, INN:{person_object['data']['fo_cki']['inn']}\nВідправлені дані: {json.dumps(person_object, indent=4, ensure_ascii=False)}\nПомилки сервера: {json.dumps(errors, indent=4, ensure_ascii=False)}"
+        error_text = errors[0]["msg"] # json.dumps(error, indent=4, ensure_ascii=False)
+        result = MESSAGE_TEMPLATE.format(
+            status=status, 
+            data=json.dumps(person_object, indent=4, ensure_ascii=False),
+            error=error_text, 
+            all_errors=json.dumps(errors, indent=4, ensure_ascii=False),
+            inn=person_object['data']['fo_cki']['inn'], 
+            response_code=resp_code,
+        )
+        self.file_frame.progress_bar.progress += 1
         self.file_frame.output(f"\n{result}")
+        self.update_idletasks()
+        if self.file_frame.progress_bar.progress % 100 == 0:
+            logger.save(self.file_frame.output_field.get("1.0", tk.END).strip())
+            logger.save_full(self.log_dump)
+            self.log_dump = ""
+            self.file_frame.output_field.delete(1.0, tk.END)
+        self.file_frame.result_label.config(text=f"Отправлено/Успешно: {self.file_frame.progress_bar.progress}/{self.success_users}") 
         return resp_status
 
 
     def file_task(self) -> None:
         file_path = filedialog.askopenfilename(title="Виберіть файл")
+        logger.refresh()
+        self.log_dump = ""
         self.file_frame.output_field.delete(1.0, tk.END)
+        self.success_users = 0
         if not file_path:
             self.file_frame.output("Файл не був вибраний.")
             return
@@ -132,15 +146,17 @@ class LoginApp(tk.Tk):
         csv_data = pd.read_csv(buffer, encoding="Windows-1251", sep=";")
         csv_dicts = csv_data.to_dict(orient='records')
         csv_len = len(csv_dicts)
-        success_users = 0
+        self.file_frame.progress_bar.max = csv_len
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
             futures = [executor.submit(self.send_build, csv_dict) for csv_dict in csv_dicts]
 
         for future in concurrent.futures.as_completed(futures):
-            success_users += int(future.result())
+            self.success_users += int(future.result())
 
-        self.file_frame.output(f"\n\nВідправлення даних завершено. Успішно: {success_users} з {csv_len}")
+        self.file_frame.output(f"\n\nВідправлення даних завершено. Успішно: {self.success_users} з {csv_len}")
+        logger.save(self.file_frame.output_field.get("1.0", tk.END).strip())
+        logger.save_full(self.log_dump)
 
     def open_file(self):
         task = threading.Thread(target=self.file_task)

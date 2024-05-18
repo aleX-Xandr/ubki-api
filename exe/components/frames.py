@@ -28,10 +28,19 @@ class LoginFrame(ttk.Frame):
 class FileFrame(ttk.Frame):
     def __init__(self, app):
         super().__init__(app)
+        
         self.choose_file_button = FormButton(
             self, text="Вибрати файл", callback=app.open_file
         )
-        self.output_field = FormText(self, fill="both", expand=True, pady=10, padx=10)
+        self.output_field = FormText(
+            self, fill="both", expand=True, pady=10, padx=10
+        )
+        self.progress_bar = FormProgressBar(
+            self, orient="horizontal", mode="determinate"
+        )
+        self.result_label = FormLabel(
+            self, text="0"
+        )
         
         self.pack_propagate(False)
         self.pack(fill="both", expand=True)
