@@ -74,7 +74,7 @@ class LoginApp(tk.Tk):
 
         self.token = auth_data["sessid"]
         self.login_frame.pack_forget()
-        self.file_frame.pack(fill="both", expand=True, pady=100, padx=100)
+        self.file_frame.pack(fill="both", expand=True, pady=10, padx=10)
         return True
         
     def build_task(self, csv_dict: dict) -> dict:
@@ -103,12 +103,12 @@ class LoginApp(tk.Tk):
         resp_code, resp_data = api.send_data(person_object)
         errors = resp_data['sentdatainfo']["items"]
         errors.sort(key=lambda error: error["errtype"])
-        resp_status = resp_code < 300
+        resp_status = resp_code > 300
         if resp_status:
             status = "БЕЗ ПОМИЛОК"
         else:
             status = "НАЯВНI ПОМИЛКИ"
-        self.log_dump += f"\nSTATUS:{status}, INN:{person_object['data']['fo_cki']['inn']}\nВідправлені дані: {json.dumps(person_object, indent=4, ensure_ascii=False)}\nПомилки сервера: {json.dumps(errors, indent=4, ensure_ascii=False)}"
+        self.log_dump += f"\nSTATUS:{status} {resp_code}, INN:{person_object['data']['fo_cki']['inn']}\nВідправлені дані: {json.dumps(person_object, indent=4, ensure_ascii=False)}\nПомилки сервера: {json.dumps(errors, indent=4, ensure_ascii=False)}"
         error_text = errors[0]["msg"] # json.dumps(error, indent=4, ensure_ascii=False)
         result = MESSAGE_TEMPLATE.format(
             status=status, 
@@ -120,13 +120,16 @@ class LoginApp(tk.Tk):
         )
         self.file_frame.progress_bar.progress += 1
         self.file_frame.output(f"\n{result}")
-        self.update_idletasks()
+        print("PROGRESS: ", self.file_frame.progress_bar.progress)
         if self.file_frame.progress_bar.progress % 100 == 0:
             logger.save(self.file_frame.output_field.get("1.0", tk.END).strip())
             logger.save_full(self.log_dump)
             self.log_dump = ""
             self.file_frame.output_field.delete(1.0, tk.END)
-        self.file_frame.result_label.config(text=f"Отправлено/Успешно: {self.file_frame.progress_bar.progress}/{self.success_users}") 
+        self.file_frame.result_label.config(
+            text=f"Всього/Відправлено/Успішно: {self.file_frame.progress_bar.max}/{self.file_frame.progress_bar.progress}/{self.success_users}"
+        ) 
+        self.update_idletasks()
         return resp_status
 
 
@@ -145,16 +148,16 @@ class LoginApp(tk.Tk):
         buffer = io.BytesIO(content)
         csv_data = pd.read_csv(buffer, encoding="Windows-1251", sep=";")
         csv_dicts = csv_data.to_dict(orient='records')
-        csv_len = len(csv_dicts)
-        self.file_frame.progress_bar.max = csv_len
+        self.file_frame.progress_bar.max = len(csv_dicts)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
             futures = [executor.submit(self.send_build, csv_dict) for csv_dict in csv_dicts]
 
         for future in concurrent.futures.as_completed(futures):
-            self.success_users += int(future.result())
+            if future.result():
+                self.success_users += 1
 
-        self.file_frame.output(f"\n\nВідправлення даних завершено. Успішно: {self.success_users} з {csv_len}")
+        self.file_frame.output(f"\n\nВідправлення даних завершено. Успішно: {self.success_users} з {self.file_frame.progress_bar.max}")
         logger.save(self.file_frame.output_field.get("1.0", tk.END).strip())
         logger.save_full(self.log_dump)
 

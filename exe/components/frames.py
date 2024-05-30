@@ -39,7 +39,7 @@ class FileFrame(ttk.Frame):
             self, orient="horizontal", mode="determinate"
         )
         self.result_label = FormLabel(
-            self, text="0"
+            self, text="Всього/Відправлено/Успішно:"
         )
         
         self.pack_propagate(False)

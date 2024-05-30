@@ -24,6 +24,7 @@ class FormButton(ttk.Button):
         self.pack(pady=10)
 
 class FormProgressBar(ttk.Progressbar):
+    success_ids: list = []
     def __init__(self, frame, progress: int = 0, max: int = 100, **kwargs: dict):
         super().__init__(frame, **kwargs)
         self.pack(fill='x', pady=10)
@@ -36,7 +37,8 @@ class FormProgressBar(ttk.Progressbar):
     
     @progress.setter
     def progress(self, new_value: int):
-        self['value'] = new_value
+        self.success_ids.append(new_value)
+        self['value'] = len(self.success_ids)
 
     @property
     def max(self) -> int:
@@ -46,6 +48,7 @@ class FormProgressBar(ttk.Progressbar):
     def max(self, new_value: int) -> None:
         self['maximum'] = new_value
         self['value'] = 0
+        self.success_ids = []
 
 class FormText(ScrolledText):
     def __init__(self, frame, **kwargs: dict):
