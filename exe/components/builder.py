@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import Any, Generator
 
-from .data import Data
-from .scope import Scope
 from config import PERSON, SCOPE_GROUPS, ADD_ZERO_TO_DNOM
+from models.data import Data
+from models.scope import Scope
 
 import re
 last_scope_error_key: str = str()

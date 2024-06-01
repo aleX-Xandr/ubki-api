@@ -9,10 +9,10 @@ import threading
 import tkinter as tk
 
 from components.api import Client
+from components.builder import DataBuilder
 from components.frames import FileFrame, LoginFrame
 from components.logger import Logger
 from config import DEBUG_MODE, MAX_THREADS, MESSAGE_TEMPLATE
-from models.builder import DataBuilder
 
 logger = Logger()
 
